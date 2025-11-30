@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Tüm Şiirler</title>
+
+  <!-- Telefon ekranına uyum için -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  <style>
+    /* Genel sıfırlama */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Sayfa ayarları */
+    body {
+      background-color: #000;   /* Siyah arka plan */
+      color: #fff;              /* Beyaz yazı */
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      min-height: 100vh;
+    }
+
+    /* Ortadaki ana alan */
+    .container {
+      max-width: 480px;        /* iPhone boyutuna uygun genişlik */
+      margin: 0 auto;          /* Ortala */
+      padding: 16px 12px 40px; /* Kenarlardan boşluk */
+    }
+
+    /* Üst başlık */
+    header {
+      padding-bottom: 12px;
+      border-bottom: 1px solid #333;
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    header p {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    /* Şiir listesi */
+    .poem-list {
+      list-style: none;  /* Noktaları kaldır */
+      margin-top: 8px;
+    }
+
+    .poem-item {
+      padding: 12px 8px;
+      border-bottom: 1px solid #222;
+    }
+
+    .poem-button {
+      width: 100%;
+      background: none;
+      border: none;
+      color: #fff;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 0;
+    }
+
+    .poem-sub {
+      font-size: 11px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    /* ---- FOTO GALERİ (MODAL) ---- */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;               /* Başta kapalı */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .modal.active {
+      display: flex;               /* Açıldığında görünür */
+    }
+
+    .modal-top {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      right: 0;
+      padding: 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+
+    .modal-title {
+      font-weight: 500;
+    }
+
+    .modal-close {
+      border: none;
+      background: none;
+      color: #fff;
+      font-size: 13px;
+      padding: 4px 8px;
+    }
+
+    .modal-gallery {
+      margin-top: 36px;
+      width: 100%;
+      height: 80vh;              /* Ekranın büyük kısmını kaplasın */
+      display: flex;
+      overflow-x: auto;          /* Sağa sola kaydırma */
+      scroll-snap-type: x mandatory;
+    }
+
+    .modal-gallery img {
+      flex: 0 0 100%;            /* Her foto tam ekran genişliği */
+      max-width: 100%;
+      height: 100%;
+      object-fit: contain;       /* Foto bozulmasın */
+      scroll-snap-align: center;
+    }
+
+    .modal-hint {
+      position: absolute;
+      bottom: 10px;
+      font-size: 11px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Mavi'ye Tüm Şiirlerim
+      </h1>
+      <p>Aşağıdan bir şiir başlığı seç.</p>
+    </header>
+
+    <ul id="poemList" class="poem-list">
+      <!-- JS ile doldurulacak -->
+    </ul>
+  </div>
+
+  <!-- FOTO GALERİ MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-top">
+      <div id="modalTitle" class="modal-title"></div>
+      <button class="modal-close" onclick="closeModal()">Kapat</button>
+    </div>
+
+    <div id="modalGallery" class="modal-gallery">
+      <!-- Fotoğraflar JS ile buraya eklenecek -->
+    </div>
+
+    <div class="modal-hint">Sağa sola kaydır.</div>
+  </div>
+
+  <script>
+    /* Şiirlerin bilgileri – id = dosya adı (uzantısız) */
+    const poems = [
+      {
+        id: "yenibirgece",
+        title: "Yeni Bir Gece",
+        images: ["fotolar/yenibirgece.jpg"]
+      },
+      {
+        id: "maviyogrendim",
+        title: "Maviyi Öğrendim",
+        images: ["fotolar/maviyogrendim.jpg"]
+      },
+      {
+        id: "tomris",
+        title: "Tomris",
+        images: ["fotolar/tomris.jpg"]
+      },
+      {
+        id: "agladigingece",
+        title: "Ağladığın Gece",
+        images: ["fotolar/agladigingece.jpg"]
+      },
+      {
+        id: "eylulgeceleri",
+        title: "Eylül Geceleri",
+        images: ["fotolar/eylulgeceleri.jpg"]
+      },
+      {
+        id: "kistaeyluluyasamak",
+        title: "Kışta Eylülü Yaşamak",
+        images: ["fotolar/kistaeyluluyasamak.jpg"]
+      },
+      {
+        id: "soyleyemediklerim1",
+        title: "Söyleyemediklerim 1",
+        images: ["fotolar/soyleyemediklerim1.jpg"]
+      },
+      {
+        id: "yenibirsayfadasanabakmak",
+        title: "Yeni Bir Sayfada Sana Bakmak",
+        images: [
+          "fotolar/yenibirsayfadasanabakmak.jpg",
+          "fotolar/yenibirsayfadasanabakmak.2.jpg"
+        ]
+      },
+      {
+        id: "gelecek",
+        title: "Gelecek",
+        images: ["fotolar/gelecek.jpg"]
+      },
+      {
+        id: "gecmis",
+        title: "Geçmiş",
+        images: ["fotolar/gecmis.jpg"]
+      },
+      {
+        id: "guzbenimicineyluldur",
+        title: "Güz Benim İçin Eylüldür",
+        images: ["fotolar/guzbenimicineyluldur.jpg"]
+      },
+      {
+        id: "yanindaykenseniizliyorum",
+        title: "Yanındayken Seni İzliyorum",
+        images: ["fotolar/yanindaykenseniizliyorum.jpg"]
+      },
+      {
+        id: "mevsimler",
+        title: "Mevsimler",
+        images: ["fotolar/mevsimler.jpg"]
+      },
+      {
+        id: "soyleyemediklerim2",
+        title: "Söyleyemediklerim 2",
+        images: ["fotolar/soyleyemediklerim2.jpg"]
+      },
+      {
+        id: "bensenim",
+        title: "Ben Senim",
+        images: ["fotolar/bensenim.jpg"]
+      },
+      {
+        id: "eylul",
+        title: "Eylül",
+        images: ["fotolar/eylul.jpg"]
+      },
+      {
+        id: "kirmizisiyahmavi",
+        title: "Kırmızı Siyah Mavi",
+        images: ["fotolar/kirmizisiyahmavi.jpg"]
+      },
+      {
+        id: "seniseviyorum",
+        title: "Seni Seviyorum",
+        images: ["fotolar/seniseviyorum.jpg"]
+      },
+      {
+        id: "sesiniizliyorum",
+        title: "Sesini İzliyorum",
+        images: ["fotolar/sesiniizliyorum.jpg"]
+      },
+      {
+        id: "usuyorsun",
+        title: "Üşüyorsun",
+        images: ["fotolar/usuyorsun.jpg"]
+      },
+      {
+        id: "karasevda",
+        title: "Kara Sevda",
+        images: ["fotolar/karasevda.jpg"]
+      },
+      {
+        id: "nefretveask",
+        title: "Nefret ve Aşk",
+        images: ["fotolar/nefretveask.jpg"]
+      },
+      {
+        id: "soyleyemediklerim3",
+        title: "Söyleyemediklerim 3",
+        images: [
+          "fotolar/soyleyemediklerim3.jpg",
+          "fotolar/soyleyemediklerim3.2.jpg",
+          "fotolar/soyleyemediklerim3.3.jpg"
+        ]
+      },
+      {
+        id: "atileesek",
+        title: "At ile Eşek",
+        images: ["fotolar/atileesek.jpg"]
+      },
+      {
+        id: "eylulusevmek",
+        title: "Eylülü Sevmek",
+        images: [
+          "fotolar/eylulusevmek.jpg",
+          "fotolar/eylulusevmek2.jpg"
+        ]
+      },
+      {
+        id: "denizmavisi",
+        title: "Deniz Mavisi",
+        images: ["fotolar/denizmavisi.jpg"]
+      },
+      {
+        id: "onkasim",
+        title: "On Kasım",
+        images: ["fotolar/onkasim.jpg"]
+      },
+      {
+        id: "oylecokki",
+        title: "Öyle Çok Ki",
+        images: ["fotolar/oylecokki.jpg"]
+      },
+      {
+        id: "ayrilik1",
+        title: "Ayrılık 1",
+        images: ["fotolar/ayrilik1.jpg"]
+      },
+      {
+        id: "hicran",
+        title: "Hicran",
+        images: ["fotolar/hicran.jpg"]
+      },
+      {
+        id: "ayrilik2",
+        title: "Ayrılık 2",
+        images: ["fotolar/ayrilik2.jpg"]
+      },
+      {
+        id: "uyarlama",
+        title: "Uyarlama",
+        images: ["fotolar/uyarlama.jpg"]
+      },
+      {
+        id: "lavinia",
+        title: "Lavinia",
+        images: ["fotolar/lavinia.jpg"]
+      },
+      {
+        id: "ayrilik3",
+        title: "Ayrılık 3",
+        images: [
+          "fotolar/ayrilik3.jpg",
+          "fotolar/ayrilik3.2.jpg"
+        ]
+      },
+      {
+        id: "beklentiler",
+        title: "Beklentiler",
+        images: ["fotolar/beklentiler.jpg"]
+      }
+    ];
+
+    /* Sayfadaki listeyi doldur */
+    const poemListEl = document.getElementById("poemList");
+
+    poems.forEach(poem => {
+      const li = document.createElement("li");
+      li.className = "poem-item";
+
+      const btn = document.createElement("button");
+      btn.className = "poem-button";
+      btn.textContent = poem.title;
+      btn.onclick = () => openModal(poem.id);
+
+      const sub = document.createElement("div");
+      sub.className = "poem-sub";
+      sub.textContent = poem.images.length + " sayfa • defter";
+
+      li.appendChild(btn);
+      li.appendChild(sub);
+      poemListEl.appendChild(li);
+    });
+
+    function openModal(poemId) {
+      const poem = poems.find(p => p.id === poemId);
+      if (!poem) return;
+
+      const modal = document.getElementById("modal");
+      const titleEl = document.getElementById("modalTitle");
+      const galleryEl = document.getElementById("modalGallery");
+
+      titleEl.textContent = poem.title;
+      galleryEl.innerHTML = ""; // Eski fotoğrafları temizle
+
+      poem.images.forEach(src => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = poem.title;
+        galleryEl.appendChild(img);
+      });
+
+      modal.classList.add("active");
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("modal");
+      modal.classList.remove("active");
+    }
+  </script>
+</body>
+</html>
